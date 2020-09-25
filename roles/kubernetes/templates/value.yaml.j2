@@ -1,0 +1,22 @@
+enabled: true
+serviceAccount:
+  create: false
+  name: token-api-access
+rbac:
+  create: false
+resources:
+  limits:
+    cpu: 100m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+protocolHttp: true
+extraArgs:
+  - --enable-skip-login
+  - --enable-insecure-login
+  - --disable-settings-authorizer
+  - --insecure-bind-address=0.0.0.0
+service:
+  type: ClusterIP
+  externalPort: 9090

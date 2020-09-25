@@ -1,0 +1,67 @@
+---
+- name: Install common packages
+  apt:
+    pkg:
+      - unzip
+      - openssh-server
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+      - jq
+      - ssh
+      - sshpass
+      - nfs-kernel-server
+      - nfs-common
+      - postgresql-client-common
+      - postgresql-client
+      - maven
+    update_cache: yes
+  register: result
+  until: result is not failed
+  retries: 5
+  delay: 5
+
+- name: Add kubernetes and helm repository packages
+  shell: |
+    curl -k -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+    curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+    echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+    apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+  args:
+    warn: no
+
+- name: Install kubernetes and helm
+  apt:
+    pkg:
+      - docker.io
+      - kubelet
+      - kubeadm
+      - kubectl
+      - kubernetes-cni
+      - helm
+    update_cache: yes
+  register: result
+  until: result is not failed
+  retries: 5
+  delay: 5
+
+- name: Create nfs folder
+  file:
+    path: '{{ nfs_server_folder_path }}'
+    state: directory
+    mode: '777'
+    group: nogroup
+    owner: nobody
+
+- name: Create kubelet config file
+  copy:
+    content: '{{ kubelet_config_content }}'
+    dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    mode: '666'
+
+- name: Create docker config file
+  copy:
+    content: '{{ docker_config_content }}'
+    dest: /etc/docker/daemon.json
+    mode: '666'

@@ -1,0 +1,47 @@
+---
+- name: Render Helm value file
+  set_fact:
+    helm_value_content: "{{ lookup('template', 'templates/' + item + '.yaml.j2') }}"
+  with_items:
+    - 'value'
+
+- name: Create Jenkins Helm value file
+  copy:
+    content: '{{ helm_value_content }}'
+    dest: '{{ helm_value_files_path }}/jenkins-values.yaml'
+    mode: '666'
+
+- name: Install Helm Jenkins
+  command: 'helm install jenkins -f {{ helm_value_files_path }}/jenkins-values.yaml --version 2.7.0 jenkinsci/jenkins'
+  register: result
+
+- name: Helm install result information
+  debug:
+    msg:
+      - '{{result.stdout}}'
+
+- name: Expose Jenkins NodePort
+  command: 'kubectl expose deployment jenkins --type=NodePort --name jenkins-nodeport'
+  register: result
+
+- name: Get Jenkins NodePort value
+  command: kubectl get svc jenkins-nodeport -o jsonpath="{.spec.ports[0].nodePort}"
+  register: result
+
+- name: Jenkins NodePort Information
+  debug:
+    msg:
+      - 'Access Kubernetes Dashboard with URL below:'
+      - 'http://{{machine_ip}}:{{result.stdout}}'
+
+- name: Get Admin Default derivePassword
+  shell: |
+    /usr/bin/kubectl get secret --namespace default jenkins -o jsonpath='{.data.jenkins-admin-password}'| /usr/bin/base64 -d
+  register: result
+
+- name: Jenkins Admin Default Password
+  debug:
+    msg:
+      - 'Access Jekins with account below:'
+      - 'admin/{{result.stdout}}'
+      - 'Go to Manage Jenkins->Configure Global Security -> Select "Jenkins''s own user database" to change default admin password'

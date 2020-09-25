@@ -1,0 +1,24 @@
+nfs:
+  server: {{ machine_ip }}
+  path: {{ nfs_server_folder_path }}
+storageClass:
+  create: true
+  provisionerName: nfs-provision
+  defaultClass: true
+  name: {{ storage_class_name }}
+  allowVolumeExpansion: true
+  reclaimPolicy: Delete
+  archiveOnDelete: true
+  accessModes: ReadWriteOnce
+rbac:
+  create: false
+serviceAccount:
+  create: false
+  name: token-api-access
+resources:
+  limits:
+    cpu: 200m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi

@@ -1,0 +1,21 @@
+---
+- name: Render Helm value file
+  set_fact:
+    helm_value_content: "{{ lookup('template', 'templates/' + item + '.yaml.j2') }}"
+  with_items:
+    - 'value'
+
+- name: Create Mongodb Helm value file
+  copy:
+    content: '{{ helm_value_content }}'
+    dest: '{{ helm_value_files_path }}/mongodb-values.yaml'
+    mode: '666'
+
+- name: Install Helm Mongodb
+  command: 'helm install mongodb -f {{ helm_value_files_path }}/mongodb-values.yaml --version 9.1.0 bitnami/mongodb'
+  register: result
+
+- name: Helm install result information
+  debug:
+    msg:
+      - '{{result.stdout}}'

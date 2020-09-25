@@ -1,0 +1,17 @@
+ansible_connection: ssh
+ansible_python_interpreter: /usr/bin/python3
+helm_value_files_path: /infrastructure
+nfs_server_folder_path: /mnt/sharedfolder
+storage_class_name: nfs
+network_subnet_range: 192.168.0.0/16
+postgresql_password: P@ssword!
+pgadmin4_password: P@ssword!
+keycloak_admin_password: P@ssword!
+jenkins_password: P@ssword!
+psql_nodeport: 32000
+pgadmin4_nodeport: 32001
+mongoadmin_nodeport: 32002
+mongodb_nodeport: 32003
+keycloak_nodeport: 32004
+jenkins_nodeport: 32005
+vagrant_machine: true

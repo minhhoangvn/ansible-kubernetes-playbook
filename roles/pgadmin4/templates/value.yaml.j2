@@ -1,0 +1,16 @@
+service: 
+  type: NodePort
+  nodePort: {{ pgadmin4_nodeport }}
+env:
+  email: admin@kms-technology.com
+  password: '{{ pgadmin4_password }}'
+persistentVolume:
+  enabled: true
+  storageClass: 'nfs'
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi

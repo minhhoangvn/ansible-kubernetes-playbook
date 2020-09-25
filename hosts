@@ -1,0 +1,2 @@
+[kubernetes]
+192.168.10.50 ansible_user=vagrant ansible_ssh_pass=vagrant

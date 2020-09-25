@@ -1,0 +1,98 @@
+- name: Set up lab
+  hosts: kubernetes
+  remote_user: root
+  become: yes
+  become_method: sudo
+  roles:
+    - common
+    - kubernetes
+    - nfs
+    - kubernetes-dashboard
+    - mongodb
+    - postgresql
+    - pgadmin4
+    - mongoadmin
+    - keycloak
+    - jenkins
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+
+  pre_tasks:
+    - name: Remove default kubelet config
+      file:
+        path: '{{ item }}'
+        state: absent
+      with_items:
+        - /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+        - /etc/docker/daemon.json
+        - /etc/hosts
+        - /etc/exports
+      ignore_errors: yes
+
+    - name: Get current host name of machine
+      shell: |
+        hostname --short
+      register: result
+
+    - name: Set host name variable
+      set_fact:
+        machine_host: '{{result.stdout}}'
+
+    - name: Get current ip of physical machine
+      shell: |
+        hostname -I | cut -d' ' -f1
+      register: result
+      when: not vagrant_machine or vagrant_machine is not defined
+
+    - name: Get current ip of vagrant machine
+      shell: |
+        ifconfig eth1 | grep -E "(inet|Mask) " | awk '{print $2}'| cut -f2 -d:
+      register: result
+      when: vagrant_machine or vagrant_machine is defined
+
+    - name: Set machine ip variable
+      set_fact:
+        machine_ip: '{{result.stdout}}'
+
+    - name: Render kubelet config template
+      set_fact:
+        kubelet_config_content: "{{ lookup('template', 'templates/' + item + '.conf.j2') }}"
+      with_items:
+        - 'kubelet'
+
+    - name: Render docker config template
+      set_fact:
+        docker_config_content: "{{ lookup('template', 'templates/' + item + '.json.j2') }}"
+      with_items:
+        - 'daemon'
+
+    - name: Render k8s rbac template
+      set_fact:
+        k8s_rbac_content: "{{ lookup('template', 'templates/' + item + '.yaml.j2') }}"
+      with_items:
+        - 'rbac'
+
+    - name: Render host config template
+      set_fact:
+        hosts_config_content: "{{ lookup('template', 'templates/' + item + '.j2') }}"
+      with_items:
+        - 'hosts'
+
+    - name: Create hostname config file
+      copy:
+        content: '{{ hosts_config_content }}'
+        dest: /etc/hosts
+        mode: '666'
+
+    - name: Create Helm value folder
+      file:
+        path: '{{ helm_value_files_path }}'
+        state: directory
+        mode: '777'
+        group: nogroup
+        owner: nobody
+
+  # post_tasks:
+  #   - name: Show all Servie NodePort
+  #     debug:
+  #       var: helm_value_files_path

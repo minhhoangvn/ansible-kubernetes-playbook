@@ -1,0 +1,36 @@
+---
+- name: Create NFS server export config file
+  copy:
+    content: '{{ nfs_server_folder_path }} {{ network_subnet_range }}(rw,sync,no_subtree_check)'
+    dest: /etc/exports
+    mode: '666'
+
+- name: Export NFS share directory
+  shell: |
+    exportfs -a
+    systemctl restart nfs-kernel-server
+
+- name: Render Helm value file
+  set_fact:
+    helm_value_content: "{{ lookup('template', 'templates/' + item + '.yaml.j2') }}"
+  with_items:
+    - 'value'
+
+- name: Create NFS Client Helm value file
+  copy:
+    content: '{{ helm_value_content }}'
+    dest: '{{ helm_value_files_path }}/nfs-values.yaml'
+    mode: '666'
+
+- name: Install Helm NFS Client
+  command: 'helm install nfs-client -f {{ helm_value_files_path }}/nfs-values.yaml --version 1.2.9 stable/nfs-client-provisioner'
+  register: result
+
+- name: Helm install result information
+  debug:
+    msg:
+      - '{{result.stdout}}'
+
+- name: Sleep for 120 seconds and continue with play
+  wait_for:
+    timeout: 120

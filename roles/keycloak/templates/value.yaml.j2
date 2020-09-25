@@ -1,0 +1,37 @@
+serviceAccount:
+  create: false
+  name: 'token-api-access'
+
+service:
+  type: NodePort
+  httpNodePort: {{ keycloak_nodeport }}
+postgresql:
+  # Disable PostgreSQL dependency
+  enabled: false
+resources:
+  requests:
+    cpu: '700m'
+    memory: '1024Mi'
+  limits:
+    cpu: '700m'
+    memory: '1024Mi'
+
+extraEnv: |
+  - name: DB_VENDOR
+    value: postgres
+  - name: DB_ADDR
+    value: "postgresql"
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_DATABASE
+    value: postgres
+  - name: DB_USER
+    value: postgres
+  - name: DB_PASSWORD
+    value: '{{ postgresql_password }}'
+  - name: KEYCLOAK_USER
+    value: "admin"
+  - name: KEYCLOAK_PASSWORD
+    value: '{{ keycloak_admin_password }}'
+  - name: JDBC_PARAMS
+    value: "useSSL=false"

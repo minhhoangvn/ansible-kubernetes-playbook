@@ -1,0 +1,18 @@
+global:
+  postgresql:
+    postgresqlPassword: "{{ postgresql_password }}"
+  storageClass: "nfs"
+postgresqlPostgresPassword: "{{ postgresql_password }}"
+persistence:
+  enabled: true
+  storageClass: "{{ storage_class_name }}"
+resources:
+  limits:
+    cpu: 200m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+service:
+  type: NodePort
+  nodePort: {{ psql_nodeport }}

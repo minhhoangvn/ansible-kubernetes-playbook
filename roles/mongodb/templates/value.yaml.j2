@@ -1,0 +1,16 @@
+image:
+  tag: 4.4.1-debian-10-r13
+auth:
+  enabled: false
+service:
+  type: NodePort
+  nodePort: {{ mongodb_nodeport }}
+persistence:
+  storageClass: '{{ storage_class_name }}'
+resources:
+  limits:
+    cpu: 300m
+    memory: 2Gi
+  requests:
+    cpu: 200m
+    memory: 1Gi

@@ -1,0 +1,74 @@
+---
+- name: Enable docker service
+  command: systemctl enable docker.service
+
+- name: Turn-off swapoff
+  shell: |
+    swapoff -a
+    # keep swap off after reboot
+    sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+- name: Reload service docker
+  service:
+    name: docker
+    state: reloaded
+
+- name: Set up Kubernetes in physcial machine
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  register: result
+  when: not vagrant_machine or vagrant_machine is not defined
+
+- name: Set up Kubernetes vagrant machine
+  command: 'kubeadm init --apiserver-advertise-address={{ machine_ip }} --apiserver-cert-extra-sans={{ machine_ip }} --pod-network-cidr=10.244.0.0/16 --node-name $(hostname -s)'
+  register: result
+  when: vagrant_machine or vagrant_machine is defined
+
+- name: Set up Kubernetes config
+  shell: |
+    kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+    kubectl taint nodes --all node-role.kubernetes.io/master-
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+
+- name: Get Kubernetes cluster info
+  command: kubectl cluster-info
+  register: result
+
+- name: Print Kubernetes cluster info
+  debug:
+    msg:
+      - 'Kubernetes cluster info'
+      - '{{result.stdout}}'
+
+- name: Set up Kubernetes config file
+  command: cp /etc/kubernetes/admin.conf ~/.kube/config
+
+- name: Install Kubernetes RBAC API token
+  shell: |
+    echo {{ k8s_rbac_content | quote }} | kubectl apply -f -
+
+- name: Get Kubernetes RBAC API token
+  shell: |
+    kubectl get secret $(kubectl get serviceaccount token-api-access -o=jsonpath='{.secrets[0].name}') -o=jsonpath='{.data.token}' | base64 --decode
+  register: result
+
+- name: Print API Token
+  debug:
+    msg:
+      - 'Use this API Token to access Kubernetes cluster'
+      - '{{result.stdout}}'
+
+- name: Add Helm repo charts
+  command: 'helm repo add {{ item }}'
+  with_items:
+    - 'bitnami https://charts.bitnami.com/bitnami'
+    - 'k8s-dashboard  https://kubernetes.github.io/dashboard/'
+    - 'stable https://kubernetes-charts.storage.googleapis.com'
+    - 'codecentric https://codecentric.github.io/helm-charts'
+    - 'runix https://helm.runix.net/'
+    - 'cowboysysop https://cowboysysop.github.io/charts/'
+    - 'jenkinsci https://charts.jenkins.io'
+
+- name: Update Helm repo
+  shell: |
+    helm repo update

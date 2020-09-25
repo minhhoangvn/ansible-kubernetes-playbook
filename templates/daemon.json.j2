@@ -1,0 +1,11 @@
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2",
+  "max-concurrent-uploads" : 10,
+  "experimental" : false,
+  "max-concurrent-downloads" : 10
+}

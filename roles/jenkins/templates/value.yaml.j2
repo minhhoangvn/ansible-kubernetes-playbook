@@ -1,0 +1,17 @@
+adminUser: "admin"
+jenkinsPassword: "{{ jenkins_password }}"
+adminPassword: "{{ jenkins_password }}"
+serviceType: NodePort
+nodePort: {{ jenkins_nodeport }}
+persistence:
+  enabled: true
+  storageClass: 'nfs'
+  size: 5Gi
+  accessMode: ReadWriteOnce
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

@@ -1,0 +1,31 @@
+---
+- name: Render Helm value file
+  set_fact:
+    helm_value_content: "{{ lookup('template', 'templates/' + item + '.yaml.j2') }}"
+  with_items:
+    - 'value'
+
+- name: Create Kubernetes Helm value file
+  copy:
+    content: '{{ helm_value_content }}'
+    dest: '{{ helm_value_files_path }}/dashboard-values.yaml'
+    mode: '666'
+
+- name: Install Kubernetes dashboard
+  command: 'helm install k8s-dashboard -f {{ helm_value_files_path }}/dashboard-values.yaml --version 2.3.0 k8s-dashboard/kubernetes-dashboard'
+  register: result
+
+- name: Helm install result information
+  debug:
+    msg:
+      - '{{result.stdout}}'
+
+- name: Get Kubernetes Dashboard NodePort value
+  command: kubectl get svc k8s-dashboard-kubernetes-dashboard -o jsonpath="{.spec.ports[0].nodePort}"
+  register: result
+
+- name: Kubernetes Dashboard Information
+  debug:
+    msg:
+      - 'Access Kubernetes Dashboard with URL below:'
+      - 'http://{{machine_ip}}:{{result.stdout}}'

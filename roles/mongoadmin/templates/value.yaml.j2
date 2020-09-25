@@ -1,0 +1,13 @@
+serviceAccount:
+  create: false
+  name: token-api-access
+service: 
+  type: NodePort
+  nodePort: {{ mongoadmin_nodeport }}
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
