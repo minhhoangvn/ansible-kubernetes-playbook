@@ -19,7 +19,7 @@
   when: not vagrant_machine or vagrant_machine is not defined
 
 - name: Set up Kubernetes vagrant machine
-  command: 'kubeadm init --apiserver-advertise-address={{ machine_ip }} --apiserver-cert-extra-sans={{ machine_ip }} --pod-network-cidr=10.244.0.0/16 --node-name $(hostname -s)'
+  command: 'kubeadm init --apiserver-advertise-address={{ machine_ip }} --apiserver-cert-extra-sans={{ machine_ip }} --pod-network-cidr=10.244.0.0/16'
   register: result
   when: vagrant_machine or vagrant_machine is defined
 
